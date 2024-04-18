@@ -19,4 +19,6 @@ public interface GoodsService {
     Result<String> buyByIdDLock(int id);
 
     Result<String> buyByIdRedisson(int id);
+
+    Result<String> buyByIdRedisRabbitMQ(int id);
 }

@@ -1,5 +1,6 @@
 package com.example.thread_safe_online.service.impl;
 
+import com.example.thread_safe_online.config.RabbitMQConfig;
 import com.example.thread_safe_online.dao.GoodsDao;
 import com.example.thread_safe_online.entry.common.Context;
 import com.example.thread_safe_online.entry.common.RedisLock;
@@ -11,6 +12,9 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.amqp.rabbit.annotation.RabbitHandler;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.cache.CacheProperties;
 import org.springframework.core.io.ClassPathResource;
@@ -31,6 +35,9 @@ import java.util.concurrent.*;
 public class GoodsServiceImpl implements GoodsService {
 
     @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Autowired
     private GoodsDao goodsDao;
 
     @Resource
@@ -43,11 +50,26 @@ public class GoodsServiceImpl implements GoodsService {
 
     private static final ExecutorService thread_pool = Executors.newSingleThreadExecutor();
 
+    //初始化创建异步修改数据库的线程
     @PostConstruct
     private void init(){
         thread_pool.submit(new BuyHandler());
+//        thread_pool.submit(new BuyHandlerMQ());
     }
 
+//    //从RabbitMQ消息队列中获取id
+//    @RabbitListener(queues = {RabbitMQConfig.QUEUE})
+//    private class BuyHandlerMQ implements Runnable {
+//        @Override
+//        @RabbitHandler
+//        public void run() {
+//            while (true) {
+//
+//            }
+//        }
+//    }
+
+    //阻塞队列获取id异步修改数据库
     private class BuyHandler implements Runnable{
 
         @Override
@@ -74,6 +96,8 @@ public class GoodsServiceImpl implements GoodsService {
         BUYLUA.setResultType(Long.class);
     }
 
+
+    //使用Lua脚本实现
     @Override
     public Result<String> buyByIdRedis(int id){
         Long result = stringRedisTemplate.execute( //执行lua脚本
@@ -100,6 +124,7 @@ public class GoodsServiceImpl implements GoodsService {
         }
     }
 
+    //无锁运行
     @Override
     public Result<String> buyById(int id) {
         int num = goodsDao.getNumById(id);
@@ -173,6 +198,7 @@ public class GoodsServiceImpl implements GoodsService {
         }
     }
 
+    //使用Redisson实现分布式锁
     @Override
     public Result<String> buyByIdRedisson(int id) {
         RLock lock = redissonClient.getLock(Context.REDIS_LOCK_HEAD + id);
@@ -197,6 +223,24 @@ public class GoodsServiceImpl implements GoodsService {
         }finally {
             lock.unlock();
         }
+    }
+
+    //使用RabbitMQ异步修改数据库
+    @Override
+    public Result<String> buyByIdRedisRabbitMQ(int id) {
+        Long result = stringRedisTemplate.execute(
+                BUYLUA,
+                Collections.emptyList(),
+                String.valueOf(id)
+        );
+        int i = 0;
+        if(result != null)
+            i = result.intValue();
+        if(i ==0)
+            return Result.fail("购买失败");
+
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE,RabbitMQConfig.ROUTING_KEY,id);
+        return Result.success("购买成功");
     }
 
     //新增商品
@@ -226,4 +270,5 @@ public class GoodsServiceImpl implements GoodsService {
         else
             return Result.fail("更新商品信息失败");
     }
+
 }

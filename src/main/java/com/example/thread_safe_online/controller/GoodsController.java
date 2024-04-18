@@ -26,7 +26,8 @@ public class GoodsController {
 //        return goodsService.buyByIdCAS(id);    //使用CAS乐观锁解决超卖问题，直接修改数据库 QPS: 1800-1900
 //        return goodsService.buyByIdDLock(id);   //使用setnx实现分布式锁，直接修改数据库
 //        return goodsService.buyByIdRedis(id);    //使用Redis lua脚本优化请求响应速度,先改Redis数据，后改数据库  QPS: 2500-2600
-        return goodsService.buyByIdRedisson(id);    //使用Redisson实现分布式锁,
+        return goodsService.buyByIdRedisRabbitMQ(id);
+//        return goodsService.buyByIdRedisson(id);    //使用Redisson实现分布式锁,
     }
 
     @PostMapping("/add")
