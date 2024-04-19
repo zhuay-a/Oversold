@@ -130,10 +130,10 @@ public class GoodsServiceImpl implements GoodsService {
         int num = goodsDao.getNumById(id);
 //        log.info("进程{}查询到剩余{}个商品",Thread.currentThread(), num);
         if (num <= 0) {
-            log.info("无法购买商品");
+//            log.info("无法购买商品");
             return Result.fail("商品不足");
         }
-        log.info("进程{}购买商品", Thread.currentThread());
+//        log.info("进程{}购买商品", Thread.currentThread());
         goodsDao.buyByIdLock(id);
         return Result.fail("购买成功");
     }
@@ -143,12 +143,12 @@ public class GoodsServiceImpl implements GoodsService {
     public Result<String> buyByIdLock(int id) {
         synchronized (GoodsServiceImpl.class) {
             int num = goodsDao.getNumById(id);
-            log.info("进程{}查询到剩余{}个商品",Thread.currentThread(), num);
+//            log.info("进程{}查询到剩余{}个商品",Thread.currentThread().getName(), num);
             if (num <= 0) {
             log.info("无法购买商品");
                 return Result.fail("商品不足");
             }
-            log.info("进程{}购买商品", Thread.currentThread());
+//            log.info("进程{}购买商品", Thread.currentThread().getName());
             goodsDao.buyByIdLock(id);
             return Result.fail("购买成功");
         }
@@ -160,11 +160,11 @@ public class GoodsServiceImpl implements GoodsService {
         int i = goodsDao.buyByIdCAS(id);
 
         if(i > 0) {
-            log.info("{}购买成功",Thread.currentThread());
+//            log.info("{}购买成功",Thread.currentThread());
             return Result.fail("购买成功");
         }
         else {
-            log.info("{}购买失败",Thread.currentThread());
+//            log.info("{}购买失败",Thread.currentThread());
             return Result.fail("购买失败");
         }
     }
@@ -183,7 +183,6 @@ public class GoodsServiceImpl implements GoodsService {
 //        if(num > 0)
 //            goodsDao.buyByIdLock(id);
 //        redisLock.unLock(id);
-
 
         try {
             int num = Integer.parseInt(Objects.requireNonNull(stringRedisTemplate.opsForValue().get(String.valueOf(id))));
