@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.SQLException;
+
 @Controller
 @RequestMapping("/goods")
 @Slf4j
@@ -40,7 +42,7 @@ public class GoodsController {
 
     @PostMapping("/update")
     @ResponseBody
-    public Result<String> updateGoods(@RequestBody GoodsDTO goodsDTO) {
+    public Result<String> updateGoods(@RequestBody GoodsDTO goodsDTO){
         return goodsService.updateGoodsById(goodsDTO);
     }
 

@@ -7,6 +7,7 @@ import com.example.thread_safe_online.entry.common.RedisLock;
 import com.example.thread_safe_online.entry.dto.GoodsDTO;
 import com.example.thread_safe_online.entry.result.Result;
 import com.example.thread_safe_online.service.GoodsService;
+import io.lettuce.core.RedisException;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import javax.swing.plaf.TableHeaderUI;
 import java.sql.SQLException;
@@ -224,7 +226,7 @@ public class GoodsServiceImpl implements GoodsService {
         }
     }
 
-    //使用RabbitMQ异步修改数据库
+    //使用Lua脚本，RabbitMQ异步修改数据库
     @Override
     public Result<String> buyByIdRedisRabbitMQ(int id) {
         Long result = stringRedisTemplate.execute(
@@ -258,16 +260,24 @@ public class GoodsServiceImpl implements GoodsService {
     //更新商品信息
     @Override
     @Transactional
-    public Result<String> updateGoodsById(GoodsDTO goodsDTO) {
+    public Result<String> updateGoodsById(GoodsDTO goodsDTO){
         if(goodsDTO.getId() == null)
             return Result.fail("商品id不能为空");
-        int i = goodsDao.updateById(goodsDTO);
-        if(i > 0) {
-            stringRedisTemplate.opsForValue().set(goodsDTO.getId().toString(), goodsDTO.getNum().toString());
-            return Result.success("更新商品信息成功");
+        try {
+            int i = goodsDao.updateById(goodsDTO);
+            if (i > 0) {
+//                throw new RedisException("msg");
+//                throw new RuntimeException("msg");
+                stringRedisTemplate.opsForValue().set(goodsDTO.getId().toString(), goodsDTO.getNum().toString());
+                return Result.success("更新商品信息成功");
+            } else {
+                return Result.fail("更新商品信息失败");
+            }
+        } catch (Exception e) {
+            // 如果 Redis 操作失败，主动抛出 SQL 异常，触发事务回滚
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return Result.fail("Redis 操作失败");
         }
-        else
-            return Result.fail("更新商品信息失败");
     }
 
 }

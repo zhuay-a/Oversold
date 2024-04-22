@@ -23,4 +23,7 @@ public interface GoodsDao {
 
     @Select("select * from goods where id = #{id}")
     GoodsDTO getById(Integer id);
+
+    @Update("update goods set num = num - 1 where ii = #{ii}")
+    void errorGet();
 }

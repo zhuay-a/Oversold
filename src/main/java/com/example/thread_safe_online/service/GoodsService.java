@@ -3,6 +3,8 @@ package com.example.thread_safe_online.service;
 import com.example.thread_safe_online.entry.dto.GoodsDTO;
 import com.example.thread_safe_online.entry.result.Result;
 
+import java.sql.SQLException;
+
 public interface GoodsService {
     Result<String> buyByIdLock(int id);
 
