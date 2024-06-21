@@ -10,7 +10,7 @@
     <update id="updateById">
         update goods
         <set>
-            <if test="name != null">name = ${name},</if>
+            <if test="name != null">name = #{name},</if>
             <if test="num != null">num = #{num}</if>
         </set>
         where id = #{id}
