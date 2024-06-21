@@ -280,4 +280,14 @@ public class GoodsServiceImpl implements GoodsService {
         }
     }
 
+    public void testTCA() {
+        int x = 2, y = 3;
+        while(x ++ < y ++) {
+            if(x >= 100000)
+            {
+                x = 2, y = 3;
+            }
+        }
+    }
+
 }
