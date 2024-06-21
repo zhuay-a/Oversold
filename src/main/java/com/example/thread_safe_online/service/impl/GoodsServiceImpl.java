@@ -281,6 +281,7 @@ public class GoodsServiceImpl implements GoodsService {
     }
 
     public void testTCA() {
+        String ch;
         int x = 2, y = 3;
         while(x ++ < y ++) {
             if(x >= 100000)
@@ -288,6 +289,7 @@ public class GoodsServiceImpl implements GoodsService {
                 x = 2, y = 3;
             }
         }
+        
     }
 
 }
